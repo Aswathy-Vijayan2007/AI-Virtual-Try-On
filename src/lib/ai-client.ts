@@ -1,7 +1,5 @@
 import { ClothingItem } from '@/types'
 
-console.log('🚀 AI Client v2 LOADED - If you do not see this, hard refresh!');
-
 const API_KEY = import.meta.env.VITE_GROK_API_KEY
 // Default to xAI, but adaptable for Groq if the user changes the base URL
 const BASE_URL = import.meta.env.DEV

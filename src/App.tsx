@@ -83,7 +83,7 @@ function AppContent() {
     ["log", "warn", "error"].forEach((level) => {
       const original = console[level as keyof Console] as (...args: any[]) => void;
 
-      console[level as keyof Console] = (...args: any[]) => {
+      (console as any)[level] = (...args: any[]) => {
         // keep normal console output
         original.apply(console, args);
 
