@@ -38,6 +38,9 @@ export async function sendChatMessage(request: ChatRequest) {
         ...request.messages
     ]
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
     try {
         const response = await fetch(`${BASE_URL}/chat/completions`, {
             method: 'POST',
@@ -49,8 +52,10 @@ export async function sendChatMessage(request: ChatRequest) {
                 model: 'grok-beta', // Or 'llama3-70b-8192' for Groq
                 messages,
                 temperature: 0.7
-            })
+            }),
+            signal: controller.signal
         })
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
             throw new Error(`API Error: ${response.statusText}`)
@@ -109,6 +114,9 @@ export async function getStructuredOutfitRecommendation(
     Do not wrap the JSON in markdown code blocks. Just return the raw JSON string.
   `
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
     try {
         const response = await fetch(`${BASE_URL}/chat/completions`, {
             method: 'POST',
@@ -120,8 +128,10 @@ export async function getStructuredOutfitRecommendation(
                 model: 'grok-beta', // Or generic compatible model
                 messages: [{ role: 'system', content: prompt }],
                 temperature: 0.5
-            })
+            }),
+            signal: controller.signal
         })
+        clearTimeout(timeoutId)
 
         if (!response.ok) return []
 
