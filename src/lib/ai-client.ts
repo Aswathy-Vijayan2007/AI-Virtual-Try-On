@@ -4,6 +4,8 @@ const API_KEY = import.meta.env.VITE_GROK_API_KEY
 // Default to xAI, but adaptable for Groq if the user changes the base URL
 const BASE_URL = import.meta.env.VITE_AI_BASE_URL || 'https://api.x.ai/v1'
 
+const MODEL = import.meta.env.VITE_AI_MODEL || 'grok-beta'
+
 export interface ChatRequest {
     messages: { role: string; content: string }[]
     wardrobeContext?: ClothingItem[]
@@ -49,7 +51,7 @@ export async function sendChatMessage(request: ChatRequest) {
                 'Authorization': `Bearer ${API_KEY}`
             },
             body: JSON.stringify({
-                model: 'grok-beta', // Or 'llama3-70b-8192' for Groq
+                model: MODEL,
                 messages,
                 temperature: 0.7
             }),
@@ -125,7 +127,7 @@ export async function getStructuredOutfitRecommendation(
                 'Authorization': `Bearer ${API_KEY}`
             },
             body: JSON.stringify({
-                model: 'grok-beta', // Or generic compatible model
+                model: MODEL,
                 messages: [{ role: 'system', content: prompt }],
                 temperature: 0.5
             }),
