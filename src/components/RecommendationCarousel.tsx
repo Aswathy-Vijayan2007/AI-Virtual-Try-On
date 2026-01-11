@@ -32,7 +32,8 @@ export const RecommendationCarousel = React.memo<RecommendationCarouselProps>(({
   // Generate initial recommendations
   useEffect(() => {
     if (clothingItems.length >= 2) {
-      generateRecommendations(context, 6).then(setRecommendations)
+      // Use heuristic only for dashboard carousel to prevent lag
+      generateRecommendations(context, 6, true).then(setRecommendations)
     }
   }, [clothingItems, generateRecommendations, context])
 
@@ -46,13 +47,13 @@ export const RecommendationCarousel = React.memo<RecommendationCarouselProps>(({
 
   // Navigate carousel
   const goToPrevious = () => {
-    setCurrentIndex(prev => 
+    setCurrentIndex(prev =>
       prev === 0 ? recommendations.length - 1 : prev - 1
     )
   }
 
   const goToNext = () => {
-    setCurrentIndex(prev => 
+    setCurrentIndex(prev =>
       prev === recommendations.length - 1 ? 0 : prev + 1
     )
   }
@@ -60,7 +61,7 @@ export const RecommendationCarousel = React.memo<RecommendationCarouselProps>(({
   // Generate new recommendations
   const handleRefresh = async () => {
     if (clothingItems.length >= 2) {
-      const newRecommendations = await generateRecommendations(context, 6)
+      const newRecommendations = await generateRecommendations(context, 6, true)
       setRecommendations(newRecommendations)
       setCurrentIndex(0)
     }

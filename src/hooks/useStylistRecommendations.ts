@@ -199,46 +199,51 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
   // Generate AI recommendations
   const generateRecommendations = useCallback(async (
     context: RecommendationContext = {},
-    maxRecommendations: number = 5
+    maxRecommendations: number = 5,
+    skipAI: boolean = false
   ): Promise<AIRecommendation[]> => {
     setIsGenerating(true)
 
     try {
-      // Simulate AI processing delay
-      // Try AI Recommendations first
-      let aiRecommendations: AIRecommendation[] = []
-      try {
-        const { getStructuredOutfitRecommendation } = await import('@/lib/ai-client')
-        const aiResults = await getStructuredOutfitRecommendation({
-          eventName: 'eventName' in context ? (context as any).eventName : undefined, // Typo in type definition vs usage, casting for now or fixing type later
-          date: 'date' in context ? (context as any).date : undefined,
-          occasion: context.occasion,
-          weather: context.weather,
-          temperature: context.temperature
-        }, clothingItems)
-
-        if (aiResults.length > 0) {
-          aiRecommendations = aiResults.map(res => {
-            const outfitItems = res.outfitIds
-              .map(id => clothingItems.find(item => item.id === id))
-              .filter((item): item is ClothingItem => !!item)
-
-            // Re-calculate local score for consistency or trust AI? 
-            // Let's trust AI but normalize confidence
-            return {
-              outfit: outfitItems,
-              confidence: 0.95, // High confidence for AI
-              reasoning: res.reasoning,
-              tags: ['AI Generated', context.occasion || 'versatile', context.season || 'all-season'].filter(Boolean)
-            }
-          }).filter(rec => rec.outfit.length > 0)
-        }
-      } catch (e) {
-        console.warn('AI recommendation failed, using heuristic', e)
+      // Simulate delay if skipping AI
+      if (skipAI) {
+        await new Promise(resolve => setTimeout(resolve, 500))
       }
 
-      // If AI returned results, return them immediately (maybe mixed with heuristic?)
-      // For now, let's prioritize AI completely if available
+      // Try AI Recommendations first (unless skipped)
+      let aiRecommendations: AIRecommendation[] = []
+
+      if (!skipAI) {
+        try {
+          const { getStructuredOutfitRecommendation } = await import('@/lib/ai-client')
+          const aiResults = await getStructuredOutfitRecommendation({
+            eventName: 'eventName' in context ? (context as any).eventName : undefined,
+            date: 'date' in context ? (context as any).date : undefined,
+            occasion: context.occasion,
+            weather: context.weather,
+            temperature: context.temperature
+          }, clothingItems)
+
+          if (aiResults.length > 0) {
+            aiRecommendations = aiResults.map(res => {
+              const outfitItems = res.outfitIds
+                .map(id => clothingItems.find(item => item.id === id))
+                .filter((item): item is ClothingItem => !!item)
+
+              return {
+                outfit: outfitItems,
+                confidence: 0.95, // High confidence for AI
+                reasoning: res.reasoning,
+                tags: ['AI Generated', context.occasion || 'versatile', context.season || 'all-season'].filter(Boolean)
+              }
+            }).filter(rec => rec.outfit.length > 0)
+          }
+        } catch (e) {
+          console.warn('AI recommendation failed, using heuristic', e)
+        }
+      }
+
+      // If AI returned results, return them immediately
       if (aiRecommendations.length > 0) {
         setLastRecommendations(aiRecommendations)
         return aiRecommendations
