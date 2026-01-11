@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Shirt, Camera, Sparkles, Menu, X } from 'lucide-react'
+import { Shirt, Camera, Sparkles, Menu, X, Calendar as CalendarIcon } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { Button } from '@/components/ui/Button'
 import { WebcamPreview } from '@/components/WebcamPreview'
 import { WardrobePanel } from '@/components/WardrobePanel'
 import { OutfitSelector } from '@/components/OutfitSelector'
 import { RecommendationCarousel } from '@/components/RecommendationCarousel'
+import { AIStylistPanel } from '@/components/Stylist/AIStylistPanel'
+import { OutfitCalendar } from '@/components/Stylist/OutfitCalendar'
 import { OnboardingModal } from '@/components/OnboardingModal'
+import { addOutfit } from '@/lib/database'
 import { cn } from '@/lib/utils'
 import type { ClothingItem, Pose, AIRecommendation } from '@/types'
 
@@ -21,7 +24,7 @@ const queryClient = new QueryClient({
   }
 })
 
-type ActiveView = 'tryon' | 'wardrobe' | 'outfits' | 'recommendations'
+type ActiveView = 'tryon' | 'wardrobe' | 'outfits' | 'recommendations' | 'stylist'
 
 function AppContent() {
   const [activeView, setActiveView] = useState<ActiveView>('tryon')
@@ -70,7 +73,8 @@ function AppContent() {
     { id: 'tryon' as const, label: 'Virtual Try-On', icon: Camera },
     { id: 'wardrobe' as const, label: 'Wardrobe', icon: Shirt },
     { id: 'outfits' as const, label: 'Build Outfit', icon: Menu },
-    { id: 'recommendations' as const, label: 'AI Stylist', icon: Sparkles }
+    { id: 'recommendations' as const, label: 'AI Suggestions', icon: Sparkles },
+    { id: 'stylist' as const, label: 'Stylist & Schedule', icon: CalendarIcon }
   ]
 
   // Add mandatory iframe logging
@@ -337,7 +341,7 @@ function AppContent() {
               <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    AI Stylist Recommendations
+                    AI Suggestions
                   </h2>
                   <p className="text-gray-600">
                     Get personalized outfit suggestions based on your wardrobe and style preferences
@@ -346,6 +350,52 @@ function AppContent() {
                 <RecommendationCarousel
                   onOutfitSelect={handleRecommendationSelect}
                 />
+              </div>
+            </div>
+          )}
+
+          {activeView === 'stylist' && (
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="max-w-6xl mx-auto space-y-8 pb-8">
+                <section>
+                  <h2 className="text-2xl font-bold mb-4">Advanced Stylist</h2>
+                  <p className="text-gray-600 mb-6">Plan your looks with intelligent recommendations based on your schedule and weather.</p>
+                  <AIStylistPanel
+                    onSelectOutfit={(outfit) => {
+                      setSelectedOutfit(outfit)
+                      setActiveView('tryon')
+                    }}
+                    onSaveToSchedule={async (items, date, eventName) => {
+                      try {
+                        await addOutfit({
+                          id: crypto.randomUUID(),
+                          name: eventName || 'Scheduled Outfit',
+                          items,
+                          createdAt: new Date(),
+                          isFavorite: false,
+                          scheduledDate: date,
+                          eventId: crypto.randomUUID(),
+                          occasion: 'casual',
+                          weather: 'sunny'
+                        })
+                        alert('Outfit scheduled!')
+                      } catch (e) {
+                        console.error('Failed to schedule', e)
+                      }
+                    }}
+                  />
+                </section>
+
+                <section className="border-t pt-8">
+                  <OutfitCalendar
+                    onSelectOutfit={(outfit) => {
+                      setSelectedOutfit(outfit.items)
+                      setActiveView('tryon')
+                    }}
+                    onUpdate={() => { }}
+                    lastUpdate={Date.now()}
+                  />
+                </section>
               </div>
             </div>
           )}

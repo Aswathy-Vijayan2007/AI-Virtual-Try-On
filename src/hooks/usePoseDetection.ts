@@ -24,7 +24,7 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
   const [isDetecting, setIsDetecting] = useState(false)
 
   const detectorRef = useRef<poseDetection.PoseDetector | null>(null)
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | undefined>(undefined)
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
   // Initialize TensorFlow.js and pose detection model
@@ -36,9 +36,21 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
         setIsLoading(true)
         setError(null)
 
-        // Initialize TensorFlow.js
-        await tf.ready()
-        console.log('TensorFlow.js initialized')
+        // Initialize TensorFlow.js with WebGL backend for GPU acceleration
+        try {
+          // Check if webgl is available
+          const hasWebGL = tf.findBackend('webgl') !== null
+          if (hasWebGL) {
+            await tf.setBackend('webgl')
+            console.log('TensorFlow.js backend set to WebGL')
+          } else {
+            console.warn('WebGL backend not found, falling back to default')
+            await tf.ready()
+          }
+        } catch (e) {
+          console.warn('Failed to set WebGL backend:', e)
+          await tf.ready()
+        }
 
         // Create detector based on model type
         let detector: poseDetection.PoseDetector
@@ -46,7 +58,7 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
         if (modelType === 'MoveNet') {
           const model = poseDetection.SupportedModels.MoveNet
           detector = await poseDetection.createDetector(model, {
-            modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
+            modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING, // Switch to lightning for speed
             enableSmoothing
           })
         } else {
@@ -120,14 +132,22 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
     setIsDetecting(true)
     videoRef.current = videoElement
 
-    const detect = async () => {
+    let lastFrameTime = 0
+    const targetFPS = 20 // Target 20 FPS to reduce load
+    const frameInterval = 1000 / targetFPS
+
+    const detect = async (timestamp: number) => {
       if (videoRef.current && isDetecting) {
-        await detectPoses(videoRef.current)
+        // Throttle frames
+        if (timestamp - lastFrameTime >= frameInterval) {
+          await detectPoses(videoRef.current)
+          lastFrameTime = timestamp
+        }
         animationFrameRef.current = requestAnimationFrame(detect)
       }
     }
 
-    detect()
+    animationFrameRef.current = requestAnimationFrame(detect)
   }, [isDetecting, detectPoses])
 
   // Stop pose detection
@@ -144,7 +164,7 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
     if (!pose.keypoints.length) return null
 
     const keypoints = pose.keypoints
-    const getPoint = (name: string) => 
+    const getPoint = (name: string) =>
       keypoints.find(kp => kp.name.includes(name) && kp.score > confidenceThreshold)
 
     return {
@@ -155,17 +175,17 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
       rightElbow: getPoint('right_elbow'),
       leftWrist: getPoint('left_wrist'),
       rightWrist: getPoint('right_wrist'),
-      
+
       // Torso alignment points
       leftHip: getPoint('left_hip'),
       rightHip: getPoint('right_hip'),
-      
+
       // Lower body alignment points
       leftKnee: getPoint('left_knee'),
       rightKnee: getPoint('right_knee'),
       leftAnkle: getPoint('left_ankle'),
       rightAnkle: getPoint('right_ankle'),
-      
+
       // Face/neck (for avoiding overlay)
       nose: getPoint('nose'),
       leftEye: getPoint('left_eye'),

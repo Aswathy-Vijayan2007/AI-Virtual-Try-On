@@ -29,13 +29,35 @@ export interface OutfitCombination {
   items: ClothingItem[];
   createdAt: Date;
   isFavorite: boolean;
+  // New fields for AI Stylist & specific events
+  eventId?: string;
+  scheduledDate?: Date; // If assigned to a calendar slot
+  occasion?: string;
+  weather?: string;
+  notes?: string;
 }
 
+export interface ScheduledOutfit extends OutfitCombination {
+  scheduledDate: Date; // Required for scheduled items
+  status: 'planned' | 'worn' | 'skipped';
+}
+
+export interface StylistInput {
+  eventName?: string;
+  date: Date;
+  occasion: string;
+  weather?: string;
+  temperature?: number; // in Celsius
+  notes?: string;
+}
+
+
 export interface RecommendationContext {
-  occasion?: 'casual' | 'formal' | 'work' | 'party' | 'date' | 'workout';
+  occasion?: 'casual' | 'formal' | 'work' | 'party' | 'date' | 'workout' | string;
   season?: 'spring' | 'summer' | 'fall' | 'winter';
-  weather?: 'sunny' | 'rainy' | 'cold' | 'hot';
+  weather?: 'sunny' | 'rainy' | 'cold' | 'hot' | string;
   colorPreference?: string;
+  temperature?: number;
 }
 
 export interface AIRecommendation {

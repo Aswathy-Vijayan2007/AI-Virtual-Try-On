@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
-import type { ClothingItem, AIRecommendation, RecommendationContext } from '@/types'
+import { useState, useCallback, useMemo } from 'react'
+import type { ClothingItem, AIRecommendation, RecommendationContext, StylistInput } from '@/types'
 
 interface ColorCompatibility {
   [key: string]: string[]
@@ -65,9 +66,14 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
 
   // Generate outfit combinations
   const generateOutfitCombinations = useCallback((
-    context: RecommendationContext = {}
+    context: RecommendationContext | StylistInput = {}
   ): ClothingItem[][] => {
-    const { occasion = 'casual', season, colorPreference } = context
+    // Normalize input to RecommendationContext
+    const occasion = 'occasion' in context ? context.occasion : context.occasion || 'casual'
+    const season = 'season' in context ? context.season : undefined
+    const weather = 'weather' in context ? context.weather : undefined
+    const temperature = 'temperature' in context ? context.temperature : undefined
+
     const combinations: ClothingItem[][] = []
 
     // Strategy 1: Top + Bottom combinations
@@ -79,23 +85,43 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
         // Check compatibility
         const colorScore = calculateColorCompatibility(top.color, bottom.color)
         const styleScore = calculateStyleCompatibility(top.style, bottom.style)
-        
+
         // Filter by occasion and season
         const occasionMatch = top.style === occasion || bottom.style === occasion
-        const seasonMatch = !season || 
+        const seasonMatch = !season ||
           top.season === season || top.season === 'all-season' ||
           bottom.season === season || bottom.season === 'all-season'
 
-        if (colorScore > 0 && styleScore > 0 && occasionMatch && seasonMatch) {
+        // Temperature checks
+        let tempMatch = true
+        if (temperature !== undefined) {
+          if (temperature < 15) { // Cold
+            // Prefer warm items (fall/winter)
+            tempMatch = (top.season === 'winter' || top.season === 'fall' || top.season === 'all-season')
+          } else if (temperature > 25) { // Hot
+            // Prefer cool items (summer/spring)
+            tempMatch = (top.season === 'summer' || top.season === 'spring' || top.season === 'all-season')
+          }
+        }
+
+        if (colorScore > 0 && styleScore > 0 && occasionMatch && seasonMatch && tempMatch) {
           const combination = [top, bottom]
-          
-          // Add outerwear if appropriate
-          const outerwear = organizedClothing['outerwear']?.find(item => 
-            calculateColorCompatibility(item.color, top.color) > 0 &&
-            calculateStyleCompatibility(item.style, top.style) > 0
-          )
-          if (outerwear && (season === 'fall' || season === 'winter')) {
-            combination.push(outerwear)
+
+          // Add outerwear if appropriate (Weather/Temperature based)
+          const needsOuterwear =
+            (season === 'fall' || season === 'winter') ||
+            (weather === 'rainy' || weather === 'snowy') ||
+            (temperature !== undefined && temperature < 18)
+
+          if (needsOuterwear) {
+            const outerwear = organizedClothing['outerwear']?.find(item =>
+              calculateColorCompatibility(item.color, top.color) > 0 &&
+              calculateStyleCompatibility(item.style, top.style) > 0 &&
+              (!weather || (weather === 'rainy' ? item.tags.includes('waterproof') || item.season !== 'summer' : true))
+            )
+            if (outerwear) {
+              combination.push(outerwear)
+            }
           }
 
           combinations.push(combination)
@@ -108,10 +134,10 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
     dresses.forEach(dress => {
       const occasionMatch = dress.style === occasion
       const seasonMatch = !season || dress.season === season || dress.season === 'all-season'
-      
+
       if (occasionMatch && seasonMatch) {
         const combination = [dress]
-        
+
         // Add accessories or outerwear
         const accessories = organizedClothing['accessories']?.find(item =>
           calculateColorCompatibility(item.color, dress.color) > 0
@@ -129,11 +155,15 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
 
   // Score an outfit combination
   const scoreOutfit = useCallback((
-    outfit: ClothingItem[], 
+    outfit: ClothingItem[],
     context: RecommendationContext = {}
   ): number => {
     let score = 0
-    const { occasion = 'casual', season, colorPreference } = context
+    // Normalize input to RecommendationContext
+    const occasion = 'occasion' in context ? context.occasion : context.occasion || 'casual'
+    const season = 'season' in context ? context.season : undefined
+    const weather = 'weather' in context ? context.weather : undefined
+    const temperature = 'temperature' in context ? context.temperature : undefined
 
     // Color harmony score
     if (outfit.length >= 2) {
@@ -145,7 +175,7 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
     // Style consistency score
     const styles = outfit.map(item => item.style)
     const dominantStyle = styles[0]
-    const styleConsistency = styles.every(style => 
+    const styleConsistency = styles.every(style =>
       calculateStyleCompatibility(dominantStyle, style) > 0
     ) ? 0.25 : 0
 
@@ -157,7 +187,7 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
 
     // Season appropriateness
     if (season) {
-      const seasonMatch = outfit.every(item => 
+      const seasonMatch = outfit.every(item =>
         item.season === season || item.season === 'all-season'
       ) ? 0.2 : 0
       score += seasonMatch
@@ -178,7 +208,7 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       const combinations = generateOutfitCombinations(context)
-      
+
       // Score and sort combinations
       const scoredCombinations = combinations
         .map(outfit => ({
@@ -191,7 +221,7 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
       // Generate recommendations with reasoning
       const recommendations: AIRecommendation[] = scoredCombinations.map(({ outfit, score }) => {
         let reasoning = 'This outfit combines '
-        
+
         // Analyze color harmony
         const colors = outfit.map(item => item.color)
         const uniqueColors = [...new Set(colors)]
