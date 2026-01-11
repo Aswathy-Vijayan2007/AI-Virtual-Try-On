@@ -62,7 +62,18 @@ export async function sendChatMessage(request: ChatRequest) {
         clearTimeout(timeoutId)
 
         if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`)
+            let errorDetails = response.statusText;
+            try {
+                const errorJson = await response.json();
+                if (errorJson.error && errorJson.error.message) {
+                    errorDetails = errorJson.error.message;
+                } else {
+                    errorDetails = JSON.stringify(errorJson);
+                }
+            } catch (e) {
+                // Ignore json parse error, just use statusText
+            }
+            throw new Error(`API Error: ${response.status} ${errorDetails}`)
         }
 
         const data = await response.json()
