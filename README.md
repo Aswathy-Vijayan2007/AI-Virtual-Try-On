@@ -1,93 +1,116 @@
-# Wardrobe-Aware AI Virtual Try-On
+# Wardrobe-Aware AI Virtual Try-On Web App
 
-A modern, intelligent virtual try-on application that helps users manage their digital wardrobe, build outfits, and visualize how clothes look on them using real-time pose detection.
+## 1. Project Title
+**Wardrobe-Aware AI Virtual Try-On Web App**
 
-## 🌟 Features
+## 2. Basic Details
+*   **Team Name**: [Insert Team Name Here]
+*   **Team Members**:
+    *   [Member 1 Name]
+    *   [Member 2 Name]
+    *   [Member 3 Name]
+*   **Track / Theme**: [Insert Track/Theme Here]
 
-- **Real-Time Virtual Try-On**: Utilizes your webcam and TensorFlow.js pose detection to map clothing items onto your body in real-time.
-- **Digital Wardrobe**: Upload and manage your clothing collection. Categorize items by type (tops, bottoms, etc.) and style.
-- **Outfit Builder**: Mix and match items from your wardrobe to create complete outfits for any occasion. Save your favorite combinations for quick access.
-- **AI Stylist**: Get intelligent outfit recommendations based on your existing wardrobe and style preferences.
-- **Smart Recommendations**: A carousel of suggested outfits to inspire your next look, tailored to your personal style.
-- **Responsive Design**: Works seamlessly across desktop and mobile devices.
+### Problem Statement
+Many users struggle with "wardrobe paralysis"—having a closet full of clothes but nothing to wear. Additionally, online shopping often leads to returns because users cannot visualize how items fit or match their existing wardrobe. There is a need for a solution that digitizes personal wardrobes, offers intelligent outfit suggestions, and allows for virtual try-on experiences without the need each physical garment.
 
-## 🛠️ Technology Stack
+### Solution Overview
+Our solution is a comprehensive web application that acts as a digital wardrobe assistant. It allows users to:
+1.  **Digitize their closet**: Upload and categorize clothing items.
+2.  **Virtual Try-On**: Use the webcam and AI-powered pose detection to overlay clothing items onto the user in real-time.
+3.  **AI Stylist**: Chat with a Groq-powered AI assistant for personalized outfit advice and get automated daily recommendations based on weather and occasions.
+4.  **Plan**: Schedule outfits for future events.
 
-- **Frontend Framework**: [React 19](https://react.dev/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **AI/ML**: [TensorFlow.js](https://www.tensorflow.org/js) (@tensorflow-models/pose-detection)
-- **State Management**: React Context & Hooks
-- **Data Fetching**: [TanStack Query](https://tanstack.com/query/latest)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Form Handling**: React Hook Form + Zod
-- **Storage**: IndexedDB (via `idb`)
+### Brief Project Description
+This application uses computer vision (TensorFlow.js) for real-time body tracking and Large Language Models (Groq) for stylistic reasoning. It runs entirely in the browser for privacy, using IndexedDB for storage, ensuring that user data remains local and secure.
 
-## 🚀 Getting Started
+---
+
+## 3. Technical Details
+
+### Tech Stack
+*   **Frontend Framework**: React 18 (with TypeScript)
+*   **Build Tool**: Vite
+*   **Styling**: Tailwind CSS, PostCSS
+*   **State Management**: TanStack Query (React Query)
+
+### Libraries & Tools
+*   **Computer Vision**: `@tensorflow/tfjs`, `@tensorflow-models/pose-detection` (MoveNet) for real-time body landmark detection.
+*   **Icons**: `lucide-react`
+*   **Database**: `idb` (IndexedDB wrapper) for local, client-side data persistence.
+*   **Validation**: `zod`, `react-hook-form`
+
+### AI Models & APIs
+*   **Stylist Intelligence**: Groq API (running Llama 3 or similar) for generating outfit reasonings and chat responses.
+*   **Pose Detection**: MoveNet (Lightning) model running locally in the browser via TensorFlow.js.
+
+### Implementation Overview
+The application is a Single Page Application (SPA).
+*   **Wardrobe**: Uses IndexedDB to store base64 image data and metadata for clothing items.
+*   **Try-On**: The `WebcamPreview` component captures the video stream, runs the MoveNet model to find shoulder and hip keypoints, and dynamically scales/positions clothing images over the user's body.
+*   **AI Recommendations**: We implemented a hybrid recommendation engine. It uses a heuristic algorithm for instant suggestions (graph-based color/style matching) and calls the Groq API for complex, context-aware advice (e.g., "What should I wear for a summer wedding?").
+
+---
+
+## 4. Installation & Execution
 
 ### Prerequisites
+*   Node.js (v18 or higher)
+*   npm (v9 or higher)
 
-- Node.js (v18 or higher recommended)
-- npm or yarn
-
-### Installation
-
-1.  **Clone the repository** (if applicable) or navigate to the project directory.
-2.  **Install dependencies**:
+### Installation Steps
+1.  Clone the repository:
+    ```bash
+    git clone <repository-url>
+    cd wardrobe-ai-tryon
+    ```
+2.  Install dependencies:
     ```bash
     npm install
     ```
+3.  **Configuration**:
+    Create a `.env` file in the root directory and add your Groq API key:
+    ```env
+    VITE_GROK_API_KEY=your_groq_api_key_here
+    VITE_AI_BASE_URL=https://api.groq.com/openai/v1
+    VITE_AI_MODEL=llama3-70b-8192
+    ```
 
-### Running the Application
-
-1.  **Start the development server**:
+### Instructions to Run Locally
+1.  Start the development server:
     ```bash
     npm run dev
     ```
-2.  Open your browser and navigate to the local URL provided (usually `http://localhost:5173`).
-3.  **Grant Camera Permission**: The application requires camera access for the Virtual Try-On feature to work.
+    *(Note: If you face script restrictions on Windows PowerShell, use `cmd /c "npm run dev"`)*
+2.  Open your browser and navigate to `http://localhost:5173`.
 
-### Building for Production
+---
 
-To create a production-ready build:
-```bash
-npm run build
-```
-This will generate the static assets in the `dist` folder.
+## 5. Deployment / Live Website
+*   **Live URL**: [Insert Live Website URL Here]
+    *(e.g., https://your-team-project.vercel.app)*
 
-## 📂 Project Structure
+*If deployment is not possible, please see the demo video below.*
 
-```
-src/
-├── components/          # React components
-│   ├── ui/              # Reusable UI components (Button, etc.)
-│   ├── WebcamPreview    # Core AR/Try-On component
-│   ├── WardrobePanel    # Wardrobe management interface
-│   ├── OutfitSelector   # Outfit creation interface
-│   ├── RecommendationCarousel # AI suggestions
-│   └── ...
-├── hooks/               # Custom React hooks
-├── lib/                 # Utility functions (cn, etc.)
-├── types/               # TypeScript type definitions
-├── App.tsx              # Main application layout and routing
-└── main.tsx             # Entry point
-```
+---
 
-## 🧩 Key Components
+## 6. Screenshots
+*(Replace these placeholders with actual screenshots of your application)*
 
--   **`WebcamPreview`**: detailed component handling the webcam stream and overlaying clothing items based on detected pose keypoints.
--   **`WardrobePanel`**: Interface for users to view, add, and delete clothing items.
--   **`App.tsx`**: Manages the main view state (Try-On, Wardrobe, Outfits, Recommendations) and global state.
+### Dashboard & Wardrobe
+![Wardrobe Interface](/screenshots/wardrobe.png)
+*Managing the digital closet*
 
-## 🤝 Contributing
+### Virtual Try-On
+![Virtual Try-On](/screenshots/tryon.png)
+*Real-time overlay of clothes using pose detection*
 
-1.  Fork the project
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+### AI Stylist Chat
+![AI Stylist](/screenshots/chat.png)
+*Chatting with the AI for outfit advice*
 
-## 📄 License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 7. Demo Video
+[Insert Link to Demo Video Here]
+*(Recommended: YouTube link or Google Drive link)*

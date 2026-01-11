@@ -31,11 +31,11 @@ export const RecommendationCarousel = React.memo<RecommendationCarouselProps>(({
 
   // Generate initial recommendations
   useEffect(() => {
-    if (clothingItems.length >= 2) {
+    if (clothingItems.length >= 2 && recommendations.length === 0 && !isGenerating) {
       // Use heuristic only for dashboard carousel to prevent lag
       generateRecommendations(context, 6, true).then(setRecommendations)
     }
-  }, [clothingItems, generateRecommendations, context])
+  }, [clothingItems.length, context]) // Only re-run if item count changes to prevent loops
 
   // Update recommendations when they change
   useEffect(() => {
