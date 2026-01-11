@@ -38,15 +38,14 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
 
         // Initialize TensorFlow.js with WebGL backend for GPU acceleration
         try {
-          // Check if webgl is available
-          const hasWebGL = tf.findBackend('webgl') !== null
-          if (hasWebGL) {
-            await tf.setBackend('webgl')
-            console.log('TensorFlow.js backend set to WebGL')
-          } else {
-            console.warn('WebGL backend not found, falling back to default')
-            await tf.ready()
-          }
+          // Set performance flags
+          tf.env().set('WEBGL_PACK', true)
+          tf.env().set('WEBGL_FORCE_F16_TEXTURES', true)
+          tf.env().set('WEBGL_RENDER_FLOAT32_CAPABLE', true)
+
+          await tf.setBackend('webgl')
+          await tf.ready()
+          console.log('TensorFlow.js backend set to WebGL with performance flags')
         } catch (e) {
           console.warn('Failed to set WebGL backend:', e)
           await tf.ready()
@@ -58,8 +57,9 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
         if (modelType === 'MoveNet') {
           const model = poseDetection.SupportedModels.MoveNet
           detector = await poseDetection.createDetector(model, {
-            modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING, // Switch to lightning for speed
-            enableSmoothing
+            modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+            enableSmoothing,
+            minPoseScore: confidenceThreshold // Early filtering
           })
         } else {
           const model = poseDetection.SupportedModels.BlazePose
@@ -133,7 +133,7 @@ export function usePoseDetection(options: UsePoseDetectionOptions = {}) {
     videoRef.current = videoElement
 
     let lastFrameTime = 0
-    const targetFPS = 20 // Target 20 FPS to reduce load
+    const targetFPS = 15 // Reduced target to 15 FPS for better stability on low-end devices
     const frameInterval = 1000 / targetFPS
 
     const detect = async (timestamp: number) => {
