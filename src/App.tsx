@@ -8,6 +8,7 @@ import { WardrobePanel } from '@/components/WardrobePanel'
 import { OutfitSelector } from '@/components/OutfitSelector'
 import { RecommendationCarousel } from '@/components/RecommendationCarousel'
 import { AIStylistPanel } from '@/components/Stylist/AIStylistPanel'
+import { AIChatPanel } from '@/components/Stylist/AIChatPanel'
 import { OutfitCalendar } from '@/components/Stylist/OutfitCalendar'
 import { OnboardingModal } from '@/components/OnboardingModal'
 import { addOutfit } from '@/lib/database'
@@ -384,6 +385,11 @@ function AppContent() {
                       }
                     }}
                   />
+                </section>
+
+                <section className="border-t pt-8">
+                  <h2 className="text-2xl font-bold mb-4">Chat with Stylist</h2>
+                  <AIChatPanel />
                 </section>
 
                 <section className="border-t pt-8">

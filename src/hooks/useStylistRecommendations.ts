@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { useState, useCallback, useMemo } from 'react'
+
 import type { ClothingItem, AIRecommendation, RecommendationContext, StylistInput } from '@/types'
 
 interface ColorCompatibility {
@@ -205,8 +205,46 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
 
     try {
       // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Try AI Recommendations first
+      let aiRecommendations: AIRecommendation[] = []
+      try {
+        const { getStructuredOutfitRecommendation } = await import('@/lib/ai-client')
+        const aiResults = await getStructuredOutfitRecommendation({
+          eventName: 'eventName' in context ? (context as any).eventName : undefined, // Typo in type definition vs usage, casting for now or fixing type later
+          date: 'date' in context ? (context as any).date : undefined,
+          occasion: context.occasion,
+          weather: context.weather,
+          temperature: context.temperature
+        }, clothingItems)
 
+        if (aiResults.length > 0) {
+          aiRecommendations = aiResults.map(res => {
+            const outfitItems = res.outfitIds
+              .map(id => clothingItems.find(item => item.id === id))
+              .filter((item): item is ClothingItem => !!item)
+
+            // Re-calculate local score for consistency or trust AI? 
+            // Let's trust AI but normalize confidence
+            return {
+              outfit: outfitItems,
+              confidence: 0.95, // High confidence for AI
+              reasoning: res.reasoning,
+              tags: ['AI Generated', context.occasion || 'versatile', context.season || 'all-season'].filter(Boolean)
+            }
+          }).filter(rec => rec.outfit.length > 0)
+        }
+      } catch (e) {
+        console.warn('AI recommendation failed, using heuristic', e)
+      }
+
+      // If AI returned results, return them immediately (maybe mixed with heuristic?)
+      // For now, let's prioritize AI completely if available
+      if (aiRecommendations.length > 0) {
+        setLastRecommendations(aiRecommendations)
+        return aiRecommendations
+      }
+
+      // Fallback to Heuristic Engine
       const combinations = generateOutfitCombinations(context)
 
       // Score and sort combinations
@@ -265,7 +303,7 @@ export function useStylistRecommendations(clothingItems: ClothingItem[]) {
     } finally {
       setIsGenerating(false)
     }
-  }, [generateOutfitCombinations, scoreOutfit])
+  }, [generateOutfitCombinations, scoreOutfit, clothingItems])
 
   // Get quick recommendations based on a specific item
   const getRecommendationsForItem = useCallback(async (

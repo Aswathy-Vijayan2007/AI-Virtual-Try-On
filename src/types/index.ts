@@ -53,11 +53,20 @@ export interface StylistInput {
 
 
 export interface RecommendationContext {
+  eventName?: string
+  date?: Date
   occasion?: 'casual' | 'formal' | 'work' | 'party' | 'date' | 'workout' | string;
   season?: 'spring' | 'summer' | 'fall' | 'winter';
   weather?: 'sunny' | 'rainy' | 'cold' | 'hot' | string;
   colorPreference?: string;
   temperature?: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
 }
 
 export interface AIRecommendation {
