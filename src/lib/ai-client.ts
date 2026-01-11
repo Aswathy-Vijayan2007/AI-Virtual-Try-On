@@ -6,7 +6,7 @@ const BASE_URL = import.meta.env.DEV
     ? '/api/groq'
     : (import.meta.env.VITE_AI_BASE_URL || 'https://api.x.ai/v1')
 
-const MODEL = import.meta.env.VITE_AI_MODEL || 'grok-beta'
+const MODEL = import.meta.env.VITE_AI_MODEL || 'llama-3.3-70b-versatile'
 
 export interface ChatRequest {
     messages: { role: string; content: string }[]
