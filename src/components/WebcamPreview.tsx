@@ -20,7 +20,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  
+
   const [isWebcamActive, setIsWebcamActive] = useState(false)
   const [webcamError, setWebcamError] = useState<string | null>(null)
   const [dimensions, setDimensions] = useState({ width: 640, height: 480 })
@@ -44,12 +44,13 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
   const startWebcam = useCallback(async () => {
     try {
       setWebcamError(null)
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 640 },
           height: { ideal: 480 },
-          facingMode: 'user'
+          facingMode: 'user',
+          frameRate: { ideal: 30, max: 60 }
         },
         audio: false
       })
@@ -57,13 +58,13 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         streamRef.current = stream
-        
+
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
             const { videoWidth, videoHeight } = videoRef.current
             setDimensions({ width: videoWidth, height: videoHeight })
             setIsWebcamActive(true)
-            
+
             // Start pose detection when video is ready
             if (isPoseReady) {
               startDetection(videoRef.current)
@@ -83,11 +84,11 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
       streamRef.current.getTracks().forEach(track => track.stop())
       streamRef.current = null
     }
-    
+
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
-    
+
     stopDetection()
     setIsWebcamActive(false)
     setWebcamError(null)
@@ -116,7 +117,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
     const canvas = canvasRef.current
     const video = videoRef.current
     const ctx = canvas.getContext('2d')
-    
+
     if (!ctx) return
 
     // Set canvas size to match video
@@ -136,7 +137,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
       try {
         const img = new Image()
         img.crossOrigin = 'anonymous'
-        
+
         img.onload = () => {
           // Calculate positioning based on clothing type and pose points
           let x = 0, y = 0, width = 0, height = 0
@@ -146,7 +147,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
             if (alignmentPoints.leftShoulder && alignmentPoints.rightShoulder) {
               const shoulderWidth = Math.abs(alignmentPoints.rightShoulder.x - alignmentPoints.leftShoulder.x)
               const centerX = (alignmentPoints.leftShoulder.x + alignmentPoints.rightShoulder.x) / 2
-              
+
               width = shoulderWidth * 2
               height = (img.height / img.width) * width
               x = centerX - width / 2
@@ -157,7 +158,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
             if (alignmentPoints.leftHip && alignmentPoints.rightHip) {
               const hipWidth = Math.abs(alignmentPoints.rightHip.x - alignmentPoints.leftHip.x)
               const centerX = (alignmentPoints.leftHip.x + alignmentPoints.rightHip.x) / 2
-              
+
               width = hipWidth * 2.2
               height = (img.height / img.width) * width
               x = centerX - width / 2
@@ -168,7 +169,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
             if (alignmentPoints.leftShoulder && alignmentPoints.rightShoulder && alignmentPoints.leftKnee) {
               const shoulderWidth = Math.abs(alignmentPoints.rightShoulder.x - alignmentPoints.leftShoulder.x)
               const centerX = (alignmentPoints.leftShoulder.x + alignmentPoints.rightShoulder.x) / 2
-              
+
               width = shoulderWidth * 2
               height = Math.abs(alignmentPoints.leftKnee.y - alignmentPoints.leftShoulder.y) * 1.2
               x = centerX - width / 2
@@ -251,7 +252,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
         {!isWebcamActive ? (
           <Button
             onClick={startWebcam}
-            disabled={isLoading || hasError}
+            disabled={isLoading || !!hasError}
             isLoading={isLoading}
             loadingText="Loading AI Model..."
             className="bg-white/90 text-gray-900 hover:bg-white"
@@ -279,7 +280,7 @@ export const WebcamPreview = React.memo<WebcamPreviewProps>(({
             AI Active
           </div>
         )}
-        
+
         {selectedOutfit.length > 0 && (
           <div className="bg-primary-500 text-white px-2 py-1 rounded-full text-xs font-medium">
             {selectedOutfit.length} item{selectedOutfit.length > 1 ? 's' : ''} selected

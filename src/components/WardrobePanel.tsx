@@ -112,7 +112,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
   // Handle form submission
   const handleSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
-    
+
     if (!selectedFile && !editingItem) {
       setFormErrors({ file: 'Please select an image file' })
       return
@@ -189,7 +189,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
   // Handle item selection
   const handleItemClick = useCallback((item: ClothingItem) => {
     const isSelected = selectedItems.some(selected => selected.id === item.id)
-    
+
     if (isSelected) {
       onItemDeselect?.(item.id)
     } else {
@@ -215,7 +215,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
   // Handle item deletion
   const handleDeleteItem = useCallback(async (item: ClothingItem, event: React.MouseEvent) => {
     event.stopPropagation()
-    
+
     if (window.confirm(`Are you sure you want to delete "${item.name}"?`)) {
       try {
         await deleteClothingItem(item.id)
@@ -309,12 +309,27 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
               <>
                 <Upload className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                 <p className="mb-4">Your wardrobe is empty</p>
-                <Button
-                  onClick={() => setIsAddModalOpen(true)}
-                  variant="outline"
-                >
-                  Add Your First Item
-                </Button>
+                <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                  <Button
+                    onClick={() => setIsAddModalOpen(true)}
+                    variant="outline"
+                  >
+                    Add Your First Item
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      const { seedWardrobe } = await import('@/lib/seedData')
+                      await seedWardrobe()
+                      // Trigger refresh (might need a better way if hook doesn't auto-refresh, generally hooks using swr/react-query do, but here it might be manual IDB)
+                      window.location.reload() // Simple brute force refresh for now as the hook might not verify external DB changes
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary-600 hover:text-primary-700 hover:bg-primary-50"
+                  >
+                    Add Demo Wardrobe
+                  </Button>
+                </div>
               </>
             ) : (
               <p>No items match your search criteria</p>
@@ -324,7 +339,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {filteredItems.map((item) => {
               const isSelected = selectedItems.some(selected => selected.id === item.id)
-              
+
               return (
                 <Card
                   key={item.id}
@@ -340,7 +355,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
                       alt={item.name}
                       className="w-full h-full object-cover rounded-t-lg"
                     />
-                    
+
                     {/* Selection indicator */}
                     {isSelected && (
                       <div className="absolute top-2 right-2 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
@@ -368,7 +383,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
                       </Button>
                     </div>
                   </div>
-                  
+
                   <CardContent className="p-3">
                     <h3 className="font-medium text-sm text-gray-900 truncate mb-1">
                       {item.name}
@@ -442,7 +457,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
               error={formErrors.name}
               required
             />
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Type
@@ -480,7 +495,7 @@ export const WardrobePanel = React.memo<WardrobePanelProps>(({
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Season
