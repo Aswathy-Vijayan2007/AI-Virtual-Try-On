@@ -74,7 +74,7 @@ export const AIChatPanel = React.memo<AIChatPanelProps>(({ className }) => {
             const errorMessage: ChatMessage = {
                 id: crypto.randomUUID(),
                 role: 'assistant',
-                content: "I'm sorry, I'm having trouble connecting to the fashion mainframe right now. Please try again later.",
+                content: `I'm encountering an issue: ${(error as Error).message || 'Unknown error'}. Please check your connection and API key.`,
                 timestamp: new Date()
             }
             setMessages(prev => [...prev, errorMessage])

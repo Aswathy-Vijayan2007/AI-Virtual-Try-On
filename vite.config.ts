@@ -9,6 +9,14 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     cors: false,
+    proxy: {
+      '/api/groq': {
+        target: 'https://api.groq.com/openai/v1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/groq/, ''),
+        secure: true,
+      }
+    },
     hmr: {
       port: 5173,
       host: '0.0.0.0'

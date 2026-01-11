@@ -2,7 +2,9 @@ import { ClothingItem } from '@/types'
 
 const API_KEY = import.meta.env.VITE_GROK_API_KEY
 // Default to xAI, but adaptable for Groq if the user changes the base URL
-const BASE_URL = import.meta.env.VITE_AI_BASE_URL || 'https://api.x.ai/v1'
+const BASE_URL = import.meta.env.DEV
+    ? '/api/groq'
+    : (import.meta.env.VITE_AI_BASE_URL || 'https://api.x.ai/v1')
 
 const MODEL = import.meta.env.VITE_AI_MODEL || 'grok-beta'
 
